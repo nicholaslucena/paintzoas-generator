@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/_pz/tokens.css">
+<link rel="stylesheet" href="../_base.css">
+<style>
+  /* título no topo, lista na base (um item por linha, cada um com sua cor); o meio fica livre para o rosto.
+     No story de anúncio a base da área segura sobe, e a lista sobe junto. */
+  .slot-titulo { top: var(--safe-top);       justify-content: flex-start; }
+  .slot-itens  { bottom: var(--safe-bottom); justify-content: flex-end; }
+  .story .slot-titulo { height: 16%; }
+  .story .slot-itens  { height: 30%; }
+  .feed  .slot-titulo { height: 18%; }
+  .feed  .slot-itens  { height: 34%; }
+  .banner .slot-titulo { height: 24%; }
+  .banner .slot-itens  { height: 52%; }
+  .banner-celular .slot-titulo { height: 18%; }
+  .banner-celular .slot-itens  { height: 34%; }
+</style>
+</head>
+<body>
+<div class="peca">
+  <img class="foto" alt="">
+  <div class="slot slot-titulo" data-slot="titulo"></div>
+  <div class="slot slot-itens" data-slot="itens"></div>
+</div>
+</body>
+</html>

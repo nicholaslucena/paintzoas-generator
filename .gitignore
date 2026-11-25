@@ -1,0 +1,16 @@
+node_modules/
+out/
+# página compilada (npm run build): gerada na hora, não vai para o git
+app/dist/
+# fotos enviadas, acervo e peças salvas ficam só no computador de quem usa
+library/uploads/
+library/images/
+library/library.json
+pecas/
+
+# chaves (Gemini, login): só no computador de quem usa; o modelo está em .env.example
+.env
+
+# configurações locais do Claude Code e da Vercel
+.claude/
+.vercel/

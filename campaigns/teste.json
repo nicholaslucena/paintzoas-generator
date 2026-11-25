@@ -1,0 +1,132 @@
+{
+  "id": "teste",
+  "seed": 42,
+  "formats": [
+    "story",
+    "feed"
+  ],
+  "variants": [
+    {
+      "id": "sacola",
+      "layout": "setup-punchline",
+      "image": "campaigns/assets/home-hero.png",
+      "focus": [
+        0.68,
+        0
+      ],
+      "zoom": 1.5,
+      "faces": [
+        {
+          "x": 0.661,
+          "y": 0.205,
+          "w": 0.048,
+          "h": 0.135
+        }
+      ],
+      "slots": {
+        "setup": "eu voltando da black friday da paintzoas",
+        "punchline": "com a sacola cheia e a conta vazia"
+      }
+    },
+    {
+      "id": "aiiin",
+      "layout": "setup-punchline",
+      "image": "campaigns/assets/home-hero.png",
+      "focus": [
+        0.68,
+        0
+      ],
+      "zoom": 1.5,
+      "faces": [
+        {
+          "x": 0.661,
+          "y": 0.205,
+          "w": 0.048,
+          "h": 0.135
+        }
+      ],
+      "slots": {
+        "setup": "Aiiin",
+        "punchline": "NÃO GOSTEI do cupom acabando hoje"
+      },
+      "colors": {
+        "setup": "hero",
+        "punchline": "h3-especial"
+      }
+    },
+    {
+      "id": "cupom",
+      "layout": "setup-punchline",
+      "image": "campaigns/assets/home-hero.png",
+      "focus": [
+        0.68,
+        0
+      ],
+      "zoom": 1.5,
+      "faces": [
+        {
+          "x": 0.661,
+          "y": 0.205,
+          "w": 0.048,
+          "h": 0.135
+        }
+      ],
+      "slots": {
+        "setup": "eu depois de usar o cupom",
+        "punchline": "PAINTZOAS20"
+      },
+      "colors": {
+        "setup": "rosa",
+        "punchline": "hero"
+      }
+    },
+    {
+      "id": "fatura",
+      "layout": "topo",
+      "image": "campaigns/assets/home-hero.png",
+      "focus": [
+        0.68,
+        0
+      ],
+      "zoom": 1.5,
+      "faces": [
+        {
+          "x": 0.661,
+          "y": 0.205,
+          "w": 0.048,
+          "h": 0.135
+        }
+      ],
+      "slots": {
+        "texto": "eu fingindo que a fatura não existe"
+      }
+    },
+    {
+      "id": "na-sacola",
+      "layout": "lista",
+      "image": "campaigns/assets/home-hero.png",
+      "focus": [
+        0.68,
+        0
+      ],
+      "zoom": 1.5,
+      "faces": [
+        {
+          "x": 0.661,
+          "y": 0.205,
+          "w": 0.048,
+          "h": 0.135
+        }
+      ],
+      "slots": {
+        "titulo": "NA SACOLA:",
+        "itens": [
+          "20% OFF",
+          "frete grátis",
+          "camiseta nova",
+          "zero arrependimento"
+        ]
+      }
+    }
+  ]
+}

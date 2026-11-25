@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/_pz/tokens.css">
+<link rel="stylesheet" href="../_base.css">
+<style>
+  /* setup no topo, punchline na base, cada um com sua cor; o meio fica livre para o rosto */
+  .slot-setup     { top: var(--safe-top);       justify-content: flex-start; }
+  .slot-punchline { bottom: var(--safe-bottom); justify-content: flex-end; }
+  .story .slot-setup, .story .slot-punchline { height: 22%; }
+  .feed  .slot-setup, .feed  .slot-punchline { height: 25%; }
+  .banner .slot-setup, .banner .slot-punchline { height: 32%; }
+  .banner-celular .slot-setup, .banner-celular .slot-punchline { height: 25%; }
+</style>
+</head>
+<body>
+<div class="peca">
+  <img class="foto" alt="">
+  <div class="slot slot-setup" data-slot="setup"></div>
+  <div class="slot slot-punchline" data-slot="punchline"></div>
+</div>
+</body>
+</html>

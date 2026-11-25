@@ -1,0 +1,12 @@
+{
+  "_sobre": "Fontes da busca de fotos. Cada uma vira uma opção no menu \"Buscar fotos em\" (na tela inicial e na busca), com a descricao embaixo do nome. Tipos: commons (Wikimedia Commons, só domínio público e CC0), nos (New Old Stock), flickr-conta (fotos livres de uma conta do Flickr, pelo nsid), europeana (um tópico do Europeana, só domínio público). europeana_chave: a chave pública de demonstração serve para pouco uso; uma chave própria é grátis em pro.europeana.eu.",
+  "fontes": [
+    { "id": "commons", "tipo": "commons", "nome": "Wikimedia Commons", "descricao": "Acervo aberto enorme, de tudo um pouco. Só fotos livres (domínio público)." },
+    { "id": "nos", "tipo": "nos", "nome": "New Old Stock", "descricao": "Fotos antigas de arquivos públicos, escolhidas a dedo." },
+    { "id": "schlesinger", "tipo": "flickr-conta", "nome": "Schlesinger Library (Harvard)", "nsid": "99902797@N03", "descricao": "Vida e história das mulheres nos EUA." },
+    { "id": "nsw", "tipo": "flickr-conta", "nome": "State Archives NSW", "nsid": "27331537@N06", "descricao": "Dia a dia na Austrália, do arquivo do governo." },
+    { "id": "europeana-retrato", "tipo": "europeana", "nome": "Europeana: retrato de estúdio", "tema": 1653, "descricao": "Retratos posados de estúdios europeus." },
+    { "id": "europeana-fotojornalismo", "tipo": "europeana", "nome": "Europeana: fotojornalismo", "tema": 1654, "descricao": "Fotojornalismo europeu e cenas de rua." }
+  ],
+  "europeana_chave": "api2demo"
+}

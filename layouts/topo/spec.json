@@ -1,0 +1,52 @@
+{
+  "id": "topo",
+  "nome": "Só no topo",
+  "descricao": "Uma frase curta no alto da foto.",
+  "formats": [
+    "story",
+    "feed",
+    "banner",
+    "banner-celular"
+  ],
+  "slots": {
+    "texto": {
+      "max_chars": 40,
+      "max_lines": 2,
+      "region": "top",
+      "label": "Texto",
+      "hint": "1 ou 2 linhas."
+    }
+  },
+  "image": {
+    "requires_free_area": [
+      "top"
+    ]
+  },
+  "colors": {
+    "distinct_between_slots": true,
+    "palette": "pastel"
+  },
+  "font_px": {
+    "story": [
+      56,
+      240
+    ],
+    "feed": [
+      48,
+      200
+    ],
+    "banner": [
+      48,
+      200
+    ],
+    "banner-celular": [
+      40,
+      170
+    ]
+  },
+  "text_scale": 1,
+  "text_area": [
+    0.08,
+    0.35
+  ]
+}

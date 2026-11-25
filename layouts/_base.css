@@ -1,0 +1,36 @@
+/* Base de todos os layouts. Fonte e cores vêm do design system (/_pz/tokens.css).
+   Nada de sombra, degradê ou fundo atrás do texto: a estética amadora depende disso.
+   Contorno, só o do design system (estilos hero e H3 especial). */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: var(--w); height: var(--h); overflow: hidden; background: #000; }
+.peca { position: relative; width: var(--w); height: var(--h); overflow: hidden; }
+
+/* A foto chega recortada no tamanho exato da peça (o recorte e o zoom são feitos no render) */
+.foto { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Campo de texto: a região onde o texto pode ficar. O render escolhe o maior tamanho que cabe. */
+.slot {
+  position: absolute;
+  left: var(--safe-left); right: var(--safe-right);
+  display: flex; flex-direction: column; align-items: flex-start;
+}
+.linha {
+  display: block; width: max-content; white-space: nowrap;
+  font-family: var(--pz-fonte); font-weight: 400;
+  font-size: calc(var(--f) * var(--tam));
+  line-height: 1;
+  margin-left: calc(var(--recuo) + var(--sobra-x, 0px));
+  color: var(--cor, transparent);
+  transform: rotate(var(--rot));
+  transform-origin: center;
+}
+.palavra { display: inline-block; transform: translateY(var(--base)); }
+/* Estilo com contorno (hero, H3 especial): o desenho do contorno vem do custom.css em /_pz/tokens.css.
+   O padding reserva o espaço do contorno, para o encaixe e o QA medirem a letra inteira. */
+.linha.contorno { padding: var(--pz-ow); }
+.sem-texto .slot { visibility: hidden; }
+/* Camada só com as letras (prévia do editor): sem foto e sem fundo */
+.so-texto, .so-texto body { background: transparent; }
+.so-texto .foto { visibility: hidden; }
+/* Texto livre (ferramenta de texto do editor): fica onde quem usa pôs, do tamanho do próprio texto */
+.slot.livre { right: auto; width: max-content; }

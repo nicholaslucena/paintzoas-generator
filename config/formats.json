@@ -1,0 +1,70 @@
+{
+  "story": {
+    "size": [
+      1080,
+      1920
+    ],
+    "safe_profiles": {
+      "organic": {
+        "top": 250,
+        "bottom": 320,
+        "left": 65,
+        "right": 65
+      },
+      "ad": {
+        "top": 269,
+        "bottom": 672,
+        "left": 65,
+        "right": 65
+      }
+    },
+    "default_profile": "organic"
+  },
+  "feed": {
+    "size": [
+      1080,
+      1350
+    ],
+    "safe": {
+      "top": 60,
+      "bottom": 60,
+      "left": 80,
+      "right": 80
+    },
+    "note": "a miniatura do grid do perfil corta as laterais; manter o texto longe das bordas"
+  },
+  "banner": {
+    "size": [
+      2048,
+      740
+    ],
+    "safe": {
+      "top": 60,
+      "bottom": 80,
+      "left": 140,
+      "right": 140
+    },
+    "note": "banner do site no computador. Mesma proporção do hero da loja no Figma (home-hero.png, 4096×1479). O tema mostra o banner na proporção da imagem. Margens: setas do carrossel nas laterais e bolinhas embaixo."
+  },
+  "banner-celular": {
+    "size": [
+      820,
+      1111
+    ],
+    "safe": {
+      "top": 60,
+      "bottom": 100,
+      "left": 60,
+      "right": 60
+    },
+    "note": "banner do site no celular (imagem separada no painel). Medida das imagens da demo do Ipanema. Bolinhas do carrossel embaixo."
+  },
+  "email": {
+    "size": [
+      600,
+      "auto"
+    ],
+    "export_scale": 2,
+    "note": "texto essencial e CTA sempre em HTML no e-mail, nunca só na imagem"
+  }
+}

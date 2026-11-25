@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/_pz/tokens.css">
+<link rel="stylesheet" href="../_base.css">
+<style>
+  /* 1 ou 2 linhas no topo; o resto da foto fica livre */
+  .slot-texto { top: var(--safe-top); justify-content: flex-start; }
+  .story .slot-texto { height: 22%; }
+  .feed  .slot-texto { height: 25%; }
+  .banner .slot-texto { height: 34%; }
+  .banner-celular .slot-texto { height: 25%; }
+</style>
+</head>
+<body>
+<div class="peca">
+  <img class="foto" alt="">
+  <div class="slot slot-texto" data-slot="texto"></div>
+</div>
+</body>
+</html>

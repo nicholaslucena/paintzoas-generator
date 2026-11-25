@@ -1,0 +1,11 @@
+{
+  "id": "livre",
+  "nome": "Livre",
+  "descricao": "Sem campos prontos: o texto vai onde a pessoa clicar (ferramenta de texto do editor).",
+  "formats": ["story", "feed", "banner", "banner-celular"],
+  "slots": {},
+  "colors": { "distinct_between_slots": true, "palette": "pastel" },
+  "font_px": { "story": [40, 240], "feed": [40, 200], "banner": [40, 200], "banner-celular": [32, 170] },
+  "text_scale": 1,
+  "text_area": [0, 1]
+}

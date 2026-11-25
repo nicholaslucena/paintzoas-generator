@@ -1,0 +1,56 @@
+{
+  "id": "setup-punchline",
+  "nome": "Meme",
+  "descricao": "Texto em cima e a virada da piada embaixo, cada um com sua cor.",
+  "formats": [
+    "story",
+    "feed",
+    "banner",
+    "banner-celular"
+  ],
+  "slots": {
+    "setup": {
+      "max_chars": 40,
+      "max_lines": 3,
+      "region": "top",
+      "label": "Começo (em cima)",
+      "hint": "A situação ou o desabafo."
+    },
+    "punchline": {
+      "max_chars": 40,
+      "max_lines": 3,
+      "region": "bottom",
+      "label": "Virada (embaixo)",
+      "hint": "A piada, em outra cor."
+    }
+  },
+  "image": {
+    "requires_free_area": [
+      "top",
+      "bottom"
+    ]
+  },
+  "colors": {
+    "distinct_between_slots": true,
+    "palette": "pastel"
+  },
+  "font_px": {
+    "story": [
+      56,
+      240
+    ],
+    "feed": [
+      48,
+      200
+    ],
+    "banner": [
+      48,
+      200
+    ],
+    "banner-celular": [
+      40,
+      170
+    ]
+  },
+  "text_scale": 1
+}

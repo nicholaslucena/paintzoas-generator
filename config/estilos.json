@@ -1,0 +1,12 @@
+{
+  "_sobre": "Estilos de texto usados nas campanhas (campo colors). Cor chapada: variável de cor do custom.css. Contorno: copiado de uma regra do custom.css (largura --pz-ow, cor do contorno --pz-oc e color). null = ainda não existe no design system.",
+  "rosa":     { "cor": "--pz-rosa-hover" },
+  "menta":    { "cor": "--pz-coral-contorno" },
+  "azul":     { "cor": "--pz-azul" },
+  "vermelho": { "cor": "--pz-coral" },
+  "lilas":    null,
+  "amarelo":  null,
+  "creme":    null,
+  "h3-especial": { "contorno_do_site": "body .section-featured-home .heading-block" },
+  "hero":        { "contorno_do_site": "body [data-store=\"home-slider\"] .heading-block" }
+}
