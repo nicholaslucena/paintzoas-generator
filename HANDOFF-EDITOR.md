@@ -5,7 +5,13 @@
 - **Marca:** cópia em `marca/` (`custom.css` + `Paintzoas.woff2`), atualizada por `npm run marca` a partir de paintzoas.vercel.app. Antes era lida do repo `paintzoas` (`nuvemshop/` e `fonts/`).
 - **Ficaram de fora:** o editor antigo (`app-antigo/`), os atalhos Instalar/Abrir Paintzoas e `out/`. A foto da campanha de teste veio para `campaigns/assets/`.
 - As 10 peças de teste saem idênticas aqui, byte a byte.
-- **Próximo passo:** deploy num projeto próprio da Vercel. Falta trocar o disco pelo Vercel Blob (fotos, acervo, peças, contador da IA), transformar o servidor numa função e reduzir fotos acima de 4,5 MB no navegador.
+
+## Vercel (25/11/2026)
+- **Armazém** (`src/app/armazem.ts`): no computador, o disco (`library/`, `pecas/`), como antes. Na Vercel (ou com `PZ_ARMAZEM=blob`), um Blob **privado** com as mesmas chaves; o contador da IA vai em `config/uso.json`. O motor e o sharp leem fotos do Blob por uma cópia em `/tmp`.
+- **Função:** o build da Vercel (`npm run vercel-build`) monta `.vercel/output` (Build Output API v3) com `src/vercel-build.ts`: a página (`app/dist`), uma função `api` com o servidor (Node 24 roda os `.ts` direto) e as rotas (`/api`, `/biblioteca`, `/pecas`, `/fonts`, `/tokens.css` vão para a função, com o caminho em `__p`). O rastreador da Vercel não lê TypeScript, por isso o build tira os tipos só para achar os imports. A função fica com ~115 MB (limite: 250), 2 GB de memória, 300 s, região gru1.
+- **Limite de 4,5 MB** (pedido e resposta): a página reduz fotos maiores antes de enviar (JPEG, até 4096 px); o PNG final da prévia vai como arquivo, com a peça no cabeçalho `x-peca`; fotos guardadas acima de 4 MB vão para a tela reduzidas (o motor usa a original).
+- **Migrar:** `npm run migrar` sobe `library/` e `pecas/` para o Blob (pula o que já está lá).
+- Testado (25/11): o pacote da função copiado para fora do projeto e rodado com as rotas do `config.json` (enviar foto, prévias, acervo, salvar/listar/apagar peça, foto de 11 MB reduzida pela página). As 10 peças de teste continuam idênticas. **Não testado:** o Blob de verdade e o Chromium da `@sparticuz/chromium` na Vercel (só no primeiro deploy).
 
 
 ## Fluxo simplificado (24/11, tarde): substitui as telas de tema/formato/ideias/foto abaixo

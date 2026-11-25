@@ -5,6 +5,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export const RAIZ_GERADOR = path.resolve(import.meta.dirname, '..');
+// Chaves e ajustes ficam no .env, fora do git. Na Vercel, nas variáveis do projeto.
+// Uma variável já definida no ambiente vale mais que o .env.
+try { process.loadEnvFile(path.join(RAIZ_GERADOR, '.env')); } catch { /* sem .env */ }
 /** Cópia da marca (nunca editar à mão: `npm run marca` traz a versão publicada). */
 export const PASTA_MARCA = path.join(RAIZ_GERADOR, 'marca');
 export const CSS_SITE = path.join(PASTA_MARCA, 'custom.css');

@@ -18,11 +18,17 @@ Editor de peças de anúncio da Paintzoas: story, feed e banners da loja, com su
 - `npm run tipos`: confere os tipos do servidor e da página.
 - `npm run render -- campaigns/teste.json`: gera as peças de teste em `out/` (para conferir que o motor não mudou).
 
+## Publicar na Vercel
+1. Na Vercel, em **Storage**, crie um **Blob** com acesso **privado** e ligue ao projeto, marcando a opção de criar o token de leitura e escrita (`BLOB_READ_WRITE_TOKEN`).
+2. Nas variáveis do projeto: as do `.env` (`GEMINI_API_KEY`, `EDITOR_USUARIO`, `EDITOR_SENHA`, `EDITOR_SEGREDO`).
+3. O `vercel.json` já diz como instalar e montar; não mude nada nas configurações de build.
+4. Para levar as fotos e as peças deste computador: copie o `BLOB_READ_WRITE_TOKEN` para o `.env` e rode `npm run migrar`.
+
 ## Onde ficam as coisas
 - **Marca:** `marca/` (cópia do `custom.css` e da fonte; não editar à mão).
 - **Modelos de peça:** `layouts/`.
 - **Fontes de fotos:** `config/acervos.json`.
-- **Fotos guardadas e peças salvas:** `library/` e `pecas/`. Ficam só no computador, fora do git.
+- **Fotos guardadas e peças salvas:** no computador, `library/` e `pecas/` (fora do git). Na Vercel, no Blob.
 - **Chaves e senha:** `.env`, fora do git.
 
 Histórico e decisões do editor: `HANDOFF-EDITOR.md`.

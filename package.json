@@ -10,11 +10,14 @@
     "revisar": "node src/revisar.ts --abrir",
     "tipos": "tsc --noEmit && npm --prefix app run tipos",
     "senha": "node src/senha.ts",
-    "marca": "node src/marca.ts"
+    "marca": "node src/marca.ts",
+    "vercel-build": "npm run build && node src/vercel-build.ts",
+    "migrar": "node src/migrar-blob.ts"
   },
   "dependencies": {
     "@google/genai": "3.6.1",
     "@sparticuz/chromium": "153.0.0",
+    "@vercel/blob": "2.9.0",
     "playwright": "1.65.1",
     "playwright-core": "1.65.1",
     "sharp": "0.35.5",
@@ -22,6 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "@vercel/nft": "1.11.14",
     "typescript": "^7.0.2"
   },
   "engines": {

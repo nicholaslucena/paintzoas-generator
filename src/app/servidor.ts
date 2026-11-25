@@ -1,24 +1,27 @@
 // Servidor do editor: a página (app/dist, feita pelo Vite) e a API. Uso: npm run app
 // Em desenvolvimento, o Vite (npm run dev) serve a página e repassa /api para cá.
+// Na Vercel, o mesmo `atender` roda como função (api/index.js); a página vem direto de app/dist.
 // O motor é o mesmo da linha de comando, então a prévia é a peça final.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { exec } from 'node:child_process';
 import sharp, { type Metadata } from 'sharp';
 import { RAIZ_GERADOR, FONTE, lerTokens } from '../design-system.ts';
 import { Variante, lerLayout, lerFormato } from '../esquemas.ts';
 import { criarMotor } from '../motor.ts';
-import { lerAcervo, guardarNoAcervo, atualizarItem, NovoItem, ItemAcervo, Rascunho, listarPecas, salvarPeca, apagarPeca, PASTA_PECAS } from './acervo.ts';
+import { lerAcervo, guardarNoAcervo, atualizarItem, NovoItem, ItemAcervo, Rascunho, listarPecas, salvarPeca, apagarPeca } from './acervo.ts';
+import { armazem, tipoDe, NA_NUVEM } from './armazem.ts';
 import { SemIa, resumoConfig, sugerirPecas, lerFoto, termosDeBusca, ordenarCandidatas } from '../ia.ts';
 import { buscarFotos, baixarImagem, listaDeFontes, type Candidata } from '../acervos/busca.ts';
 import { exigeLogin, logado, credenciaisCertas, cookieDeEntrada, cookieDeSaida } from './sessao.ts';
 
 const PORTA = Number(process.env.PZ_PORTA ?? 4175);
 const PASTA_APP = path.join(RAIZ_GERADOR, 'app', 'dist');
-const PASTA_BIBLIOTECA = path.join(RAIZ_GERADOR, 'library');
-const PASTA_ENVIOS = path.join(PASTA_BIBLIOTECA, 'uploads');
+/** A Vercel recusa respostas acima de 4,5 MB: fotos maiores vão para a tela reduzidas (o motor usa a original). */
+const MAXIMO_RESPOSTA = 4 * 1024 * 1024;
 const FORMATOS = ['story', 'feed', 'banner', 'banner-celular'] as const;
 const TIPOS: Record<string, string> = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -65,12 +68,11 @@ async function guardarEnvio(dados: Buffer, nomeOriginal: string) {
   try { meta = await sharp(dados).metadata(); } catch { return null; }
   if (!EXTENSOES_FOTO.has(ext)) ext = meta.format === 'png' ? '.png' : meta.format === 'webp' ? '.webp' : '.jpg';
   const hash = crypto.createHash('sha1').update(dados).digest('hex').slice(0, 16);
-  fs.mkdirSync(PASTA_ENVIOS, { recursive: true });
-  const destino = path.join(PASTA_ENVIOS, hash + ext);
-  if (!fs.existsSync(destino)) fs.writeFileSync(destino, dados);
+  const chave = `library/uploads/${hash}${ext}`;
+  if (!(await armazem.existe(chave))) await armazem.gravar(chave, dados);
   const girada = (meta.orientation ?? 1) >= 5;
   return {
-    image: path.relative(RAIZ_GERADOR, destino).split(path.sep).join('/'),
+    image: chave,
     url: `/biblioteca/uploads/${hash}${ext}`,
     largura: girada ? meta.height : meta.width,
     altura: girada ? meta.width : meta.height,
@@ -116,10 +118,28 @@ function tokensCss() {
 :root { ${Object.entries(lerTokens()).map(([k, v]) => `${k}: ${v};`).join(' ')} }`;
 }
 
+/** Foto ou miniatura guardada (library/… ou pecas/…). Na nuvem, fotos grandes demais para a resposta vão reduzidas. */
+async function guardado(res: http.ServerResponse, chave: string) {
+  let dados: Buffer | null;
+  try { dados = await armazem.ler(chave); } catch { dados = null; }
+  if (!dados) return erro(res, 404, 'não encontrado');
+  let tipo = tipoDe(chave);
+  if (NA_NUVEM && dados.length > MAXIMO_RESPOSTA) {
+    dados = await sharp(dados).rotate().resize(2560, 2560, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
+    tipo = 'image/jpeg';
+  }
+  // fotos têm o nome pelo conteúdo (nunca mudam); miniaturas das peças mudam ao salvar de novo
+  const cache = chave.startsWith('library/') && !chave.endsWith('.json') ? 'private, max-age=31536000, immutable' : 'no-store';
+  res.writeHead(200, { 'content-type': tipo, 'cache-control': cache });
+  res.end(dados);
+}
+
 // ---------- rotas ----------
-async function atender(req: http.IncomingMessage, res: http.ServerResponse) {
+export async function atender(req: http.IncomingMessage, res: http.ServerResponse) {
   const url = new URL(req.url ?? '/', 'http://127.0.0.1');
-  const p = decodeURIComponent(url.pathname);
+  // Na Vercel, o vercel.json manda tudo do editor para a função com o caminho original em "__p"
+  const p = decodeURIComponent(url.searchParams.get('__p') ?? url.pathname);
+  url.searchParams.delete('__p');
 
   // ---------- login (só quando há EDITOR_SENHA no .env) ----------
   if (p === '/api/sessao') {
@@ -159,9 +179,9 @@ async function atender(req: http.IncomingMessage, res: http.ServerResponse) {
   }
   // fotos da biblioteca (envios e acervo), para miniaturas e para escolher o foco
   if (req.method === 'GET' && p.startsWith('/biblioteca/')) {
-    const alvo = path.resolve(PASTA_BIBLIOTECA, '.' + p.slice('/biblioteca'.length));
-    if (!dentro(PASTA_BIBLIOTECA, alvo) || !fs.existsSync(alvo) || fs.statSync(alvo).isDirectory()) return erro(res, 404, 'não encontrado');
-    return arquivo(res, alvo);
+    const chave = 'library/' + p.slice('/biblioteca/'.length);
+    if (chave.includes('..') || chave.endsWith('.json')) return erro(res, 404, 'não encontrado');
+    return guardado(res, chave);
   }
 
   // Mini-imagem de cada fonte (menu "Buscar fotos em"): a primeira foto de uma busca fixa naquela
@@ -246,8 +266,15 @@ async function atender(req: http.IncomingMessage, res: http.ServerResponse) {
     const numero = fila ? (ultimaPrevia[fila] = (ultimaPrevia[fila] ?? 0) + 1) : 0;
     const superado = () => fila !== null && numero !== ultimaPrevia[fila];
     const rapida = pedido.rapida === true;
-    const { png, texto, peca } = await motor.renderizar(r.data, { id: 'peca', formato, seed: pedido.seed, perfilStory: pedido.perfilStory, superado, rapida });
+    // fotos guardadas (library/…) vêm do armazém para um arquivo no disco, que é o que o motor lê
+    const variante = r.data.image.startsWith('library/') ? { ...r.data, image: await armazem.noDisco(r.data.image) ?? r.data.image } : r.data;
+    const { png, texto, peca } = await motor.renderizar(variante, { id: 'peca', formato, seed: pedido.seed, perfilStory: pedido.perfilStory, superado, rapida });
     if (superado()) return json(res, { superado: true });
+    // O PNG final vai como arquivo (em base64 ele passaria do limite de 4,5 MB da Vercel); a peça, no cabeçalho
+    if (!rapida && png) {
+      res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-store', 'x-peca': encodeURIComponent(JSON.stringify(peca)) });
+      return res.end(png);
+    }
     return json(res, { peca, png: png ? png.toString('base64') : null, tipo: rapida ? 'image/jpeg' : 'image/png', texto: texto ? texto.toString('base64') : null });
   }
 
@@ -279,10 +306,12 @@ async function atender(req: http.IncomingMessage, res: http.ServerResponse) {
   }
   // Lê a foto do acervo com IA e completa o que estiver vazio (rostos marcados à mão e textos dela ficam)
   if (req.method === 'POST' && p.startsWith('/api/ler-foto/')) {
-    const item = lerAcervo().find((i) => i.id === p.slice('/api/ler-foto/'.length));
+    const item = (await lerAcervo()).find((i) => i.id === p.slice('/api/ler-foto/'.length));
     if (!item) return erro(res, 404, 'Foto não encontrada no acervo.');
-    const lido = await lerFoto(path.join(RAIZ_GERADOR, 'library', item.file));
-    const atualizado = atualizarItem(item.id, {
+    const local = await armazem.noDisco(`library/${item.file}`);
+    if (!local) return erro(res, 404, 'Foto não encontrada no acervo.');
+    const lido = await lerFoto(local);
+    const atualizado = await atualizarItem(item.id, {
       descricao: item.descricao || lido.descricao,
       energia: lido.energia,
       areas_livres: lido.areas_livres,
@@ -293,7 +322,7 @@ async function atender(req: http.IncomingMessage, res: http.ServerResponse) {
 
   // ---------- acervo ----------
   const comUrls = (i: ItemAcervo) => ({ ...i, url: `/biblioteca/${i.file}`, urlMiniatura: `/biblioteca/${i.miniatura}`, image: `library/${i.file}` });
-  if (req.method === 'GET' && p === '/api/acervo') return json(res, lerAcervo().map(comUrls));
+  if (req.method === 'GET' && p === '/api/acervo') return json(res, (await lerAcervo()).map(comUrls));
   if (req.method === 'POST' && p === '/api/acervo') {
     const r = NovoItem.safeParse(JSON.parse((await corpo(req)).toString('utf8')));
     if (!r.success) return erro(res, 400, r.error.issues.map((i) => i.message).join('; '));
@@ -302,44 +331,50 @@ async function atender(req: http.IncomingMessage, res: http.ServerResponse) {
   if (req.method === 'POST' && p.startsWith('/api/acervo/')) {
     const mudancas = JSON.parse((await corpo(req)).toString('utf8'));
     const permitidas = Object.fromEntries(Object.entries(mudancas).filter(([k]) => ['uso_permitido', 'source', 'descricao', 'rostos', 'pessoas_reconheciveis'].includes(k)));
-    return json(res, comUrls(atualizarItem(p.slice('/api/acervo/'.length), permitidas)));
+    return json(res, comUrls(await atualizarItem(p.slice('/api/acervo/'.length), permitidas)));
   }
 
   // ---------- peças salvas ----------
-  if (req.method === 'GET' && p === '/api/pecas') return json(res, listarPecas());
+  if (req.method === 'GET' && p === '/api/pecas') return json(res, await listarPecas());
   if (req.method === 'POST' && p === '/api/pecas') {
     const pedido = JSON.parse((await corpo(req)).toString('utf8')) as { id?: string; rascunho: unknown; miniatura?: string };
     const r = Rascunho.safeParse(pedido.rascunho);
     if (!r.success) return erro(res, 400, r.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '));
     const mini = pedido.miniatura ? await sharp(Buffer.from(pedido.miniatura, 'base64')).resize(360, 640, { fit: 'inside' }).jpeg({ quality: 80 }).toBuffer() : null;
-    return json(res, salvarPeca(pedido.id, r.data, mini));
+    return json(res, await salvarPeca(pedido.id, r.data, mini));
   }
-  if (req.method === 'DELETE' && p.startsWith('/api/pecas/')) { apagarPeca(p.slice('/api/pecas/'.length)); return json(res, { ok: true }); }
+  if (req.method === 'DELETE' && p.startsWith('/api/pecas/')) { await apagarPeca(p.slice('/api/pecas/'.length)); return json(res, { ok: true }); }
   if (req.method === 'GET' && p.startsWith('/pecas/')) {
-    const alvo = path.resolve(PASTA_PECAS, '.' + p.slice('/pecas'.length));
-    if (!dentro(PASTA_PECAS, alvo) || !fs.existsSync(alvo) || !['.png', '.jpg'].includes(path.extname(alvo))) return erro(res, 404, 'não encontrado');
-    return arquivo(res, alvo);
+    const chave = 'pecas/' + p.slice('/pecas/'.length);
+    if (chave.includes('..') || !['.png', '.jpg'].includes(path.extname(chave))) return erro(res, 404, 'não encontrado');
+    return guardado(res, chave);
   }
 
   return erro(res, 404, 'não encontrado');
 }
 
-const servidor = http.createServer((req, res) => {
-  atender(req, res).catch((e: Error) => {
+/** Atende um pedido e transforma erros em resposta (usado aqui e pela função da Vercel). */
+export function responder(req: http.IncomingMessage, res: http.ServerResponse) {
+  return atender(req, res).catch((e: Error) => {
     console.error(e);
     // Sem IA (sem chave, sem cota): a página mostra a mensagem e segue sem IA
     if (!res.headersSent) e instanceof SemIa ? json(res, { erro: e.message, semIa: true }, 503) : erro(res, 500, e.message);
     else res.end();
   });
-});
-servidor.listen(PORTA, '127.0.0.1', () => {
-  const endereco = `http://127.0.0.1:${PORTA}/`;
-  console.log(`Editor aberto em ${endereco}`);
-  if (process.argv.includes('--abrir')) {
-    const abrir = process.platform === 'win32' ? `start "" "${endereco}"` : process.platform === 'darwin' ? `open "${endereco}"` : `xdg-open "${endereco}"`;
-    exec(abrir);
-  }
-});
-const desligar = async () => { servidor.close(); await motor.fechar(); process.exit(0); };
-process.on('SIGINT', desligar);
-process.on('SIGTERM', desligar);
+}
+
+// Rodando direto (npm run app / npm run dev): abre o servidor. Importado pela Vercel: só exporta.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const servidor = http.createServer((req, res) => { void responder(req, res); });
+  servidor.listen(PORTA, '127.0.0.1', () => {
+    const endereco = `http://127.0.0.1:${PORTA}/`;
+    console.log(`Editor aberto em ${endereco}${NA_NUVEM ? ' (guardando no Blob)' : ''}`);
+    if (process.argv.includes('--abrir')) {
+      const abrir = process.platform === 'win32' ? `start "" "${endereco}"` : process.platform === 'darwin' ? `open "${endereco}"` : `xdg-open "${endereco}"`;
+      exec(abrir);
+    }
+  });
+  const desligar = async () => { servidor.close(); await motor.fechar(); process.exit(0); };
+  process.on('SIGINT', desligar);
+  process.on('SIGTERM', desligar);
+}

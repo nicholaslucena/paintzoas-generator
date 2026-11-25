@@ -1,4 +1,5 @@
 // Chamadas ao servidor do editor (src/app/servidor.ts). Erros chegam como { erro } e viram Error.
+import { caberNoEnvio } from './lib/arquivos';
 
 export interface Campo {
   max_chars: number;
@@ -93,6 +94,10 @@ async function pedir<T>(url: string, corpo?: unknown, metodo = corpo === undefin
     if ((e as Error).name === 'AbortError') throw e;
     throw new ErroDaApi('O editor não respondeu. Ele ainda está rodando?');
   }
+  // o PNG final da prévia vem como arquivo, com a peça no cabeçalho
+  if (r.ok && r.headers.get('content-type')?.startsWith('image/')) {
+    return { peca: JSON.parse(decodeURIComponent(r.headers.get('x-peca') ?? 'null')), blob: await r.blob() } as T;
+  }
   const dados = await r.json().catch(() => ({}));
   // a sessão venceu no meio do uso: recarrega e cai na tela de login
   if (r.status === 401 && url !== '/api/sessao') { location.reload(); throw new ErroDaApi('Entre de novo.'); }
@@ -114,7 +119,9 @@ export const api = {
   ordenar: (descricao: string, layout: string, miniaturas: string[]) =>
     pedir<{ ordem: { foto: number; motivo: string }[] }>('/api/ordenar-fotos', { descricao, layout, miniaturas }),
   baixarFoto: (c: Candidata) => pedir<FotoEnviada>('/api/baixar-foto', c),
-  async enviarFoto(arquivo: Blob, nome: string): Promise<FotoEnviada> {
+  async enviarFoto(original: Blob, nome: string): Promise<FotoEnviada> {
+    const arquivo = await caberNoEnvio(original);
+    if (arquivo !== original) nome = nome.replace(/\.\w+$/, '') + '.jpg'; // reduzida: virou JPEG
     const r = await fetch('/api/fotos', { method: 'POST', body: arquivo, headers: { 'x-nome': encodeURIComponent(nome) } });
     const dados = await r.json().catch(() => ({}));
     if (!r.ok) throw new ErroDaApi(dados.erro ?? 'Não consegui enviar a foto.');
@@ -126,7 +133,7 @@ export const api = {
   mudarItem: (id: string, mudancas: Partial<Pick<ItemAcervo, 'rostos' | 'descricao'>>) => pedir<ItemAcervo>(`/api/acervo/${id}`, mudancas),
   lerFoto: (id: string) => pedir<ItemAcervo & { rostosDaIa: boolean }>(`/api/ler-foto/${id}`, {}),
   prever: (variante: Variante, seed: number, formato: Formato, anuncio: boolean, opcoes: { canal?: string; rapida?: boolean } = {}, sinal?: AbortSignal) =>
-    pedir<{ superado: true } | { peca: Peca; png: string | null; tipo: string; texto: string | null }>('/api/prever',
+    pedir<{ superado: true } | { peca: Peca; png?: string | null; tipo?: string; texto?: string | null; blob?: Blob }>('/api/prever',
       { variante, seed, formato, perfilStory: anuncio ? 'ad' : 'organic', canal: opcoes.canal, rapida: opcoes.rapida }, 'POST', sinal),
   pecas: () => pedir<PecaSalva[]>('/api/pecas'),
   salvarPeca: (id: string | null, rascunho: { variante: Variante; seed: number; anuncio: boolean; titulo?: string; editor: unknown }, miniatura: string | null) =>

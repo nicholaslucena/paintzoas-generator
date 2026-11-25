@@ -87,3 +87,25 @@ export async function miniaturaJpeg(blob: Blob, largura = 360): Promise<string> 
   const jpg = await new Promise<Blob>((ok) => canvas.toBlob((b) => ok(b!), 'image/jpeg', 0.82));
   return blobParaBase64(jpg);
 }
+
+/**
+ * A Vercel recusa envios acima de 4,5 MB. Foto maior que isso vai reduzida, em JPEG
+ * (até 4096 px no lado maior; menos, se ainda passar). Fotos menores vão como estão.
+ */
+export async function caberNoEnvio(arquivo: Blob, limite = 4 * 1024 * 1024): Promise<Blob> {
+  if (arquivo.size <= limite) return arquivo;
+  const img = await createImageBitmap(arquivo); // já vem virada conforme o EXIF
+  try {
+    let lado = Math.min(4096, Math.max(img.width, img.height));
+    for (;;) {
+      const escala = lado / Math.max(img.width, img.height);
+      const canvas = Object.assign(document.createElement('canvas'), { width: Math.round(img.width * escala), height: Math.round(img.height * escala) });
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const jpg = await new Promise<Blob>((ok) => canvas.toBlob((b) => ok(b!), 'image/jpeg', 0.9));
+      if (jpg.size <= limite || lado <= 1200) return jpg;
+      lado = Math.round(lado * 0.8);
+    }
+  } finally {
+    img.close();
+  }
+}

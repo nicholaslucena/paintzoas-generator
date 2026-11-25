@@ -73,7 +73,7 @@ export async function renderizar(v: Variante, seed: number, formato: Formato, an
   if (pronta && (opcoes.rapida ? pronta.texto : pronta.final)) return pronta;
   const res = await api.prever(v, seed, formato, anuncio, { canal: opcoes.canal, rapida: opcoes.rapida }, opcoes.sinal);
   if ('superado' in res) throw new Error('superado');
-  const blob = res.png ? base64ParaBlob(res.png, res.tipo) : null;
+  const blob = res.blob ?? (res.png ? base64ParaBlob(res.png, res.tipo ?? 'image/png') : null);
   const texto = res.texto ? URL.createObjectURL(base64ParaBlob(res.texto, 'image/png')) : null;
   return guardar({
     chave, chaveRecorte: chaveRecorteDe(v, formato, anuncio), chaveTexto: chaveTextoDe(v, seed, formato, anuncio), v, peca: res.peca,

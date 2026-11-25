@@ -7,16 +7,19 @@ import sharp from 'sharp';
 import { z } from 'zod';
 import { GoogleGenAI, ApiError, type Part } from '@google/genai';
 import { RAIZ_GERADOR } from './design-system.ts';
+import { armazem, NA_NUVEM } from './app/armazem.ts';
 
 // ---------- chave do Gemini ----------
-// Fica em generator/.env (GEMINI_API_KEY=...), fora do git. Na Vercel, na variável do projeto.
-// Uma variável já definida no ambiente vale mais que o .env.
-try { process.loadEnvFile(path.join(RAIZ_GERADOR, '.env')); } catch { /* sem .env: segue sem IA */ }
+// Fica no .env (GEMINI_API_KEY=...), fora do git; quem lê o .env é o design-system.ts.
+// Na Vercel, na variável do projeto.
 
 // ---------- contagem de uso (fora do repositório) ----------
-const PASTA_CONFIG = process.platform === 'win32'
-  ? path.join(process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming'), 'paintzoas')
-  : path.join(os.homedir(), '.config', 'paintzoas');
+// No computador: na pasta de configurações da pessoa. Na Vercel: uma cópia em /tmp, trazida do
+// Blob (config/uso.json) quando a função liga e devolvida a cada mudança.
+const PASTA_CONFIG = NA_NUVEM ? path.join(os.tmpdir(), 'paintzoas', 'config')
+  : process.platform === 'win32'
+    ? path.join(process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming'), 'paintzoas')
+    : path.join(os.homedir(), '.config', 'paintzoas');
 /**
  * Só estes dois modelos (decisão de 24/11/2026): o 3.5 Flash e, quando ele está sobrecarregado,
  * sem resposta ou sem cota, o 3.5 Flash Lite. Cada um tem a própria cota grátis por dia.
@@ -61,7 +64,17 @@ function lerUso(): Uso {
   // limites aprendidos continuam valendo; contagem e esgotado zeram a cada dia
   return u.dia === hoje ? { dia: hoje, pedidos: u.pedidos ?? {}, limites: u.limites ?? {}, esgotado: u.esgotado ?? {} } : { dia: hoje, pedidos: {}, limites: u.limites ?? {}, esgotado: {} };
 }
-function gravarUso(u: Uso) { fs.mkdirSync(PASTA_CONFIG, { recursive: true }); fs.writeFileSync(ARQUIVO_USO, JSON.stringify(u, null, 2)); }
+function gravarUso(u: Uso) {
+  fs.mkdirSync(PASTA_CONFIG, { recursive: true });
+  fs.writeFileSync(ARQUIVO_USO, JSON.stringify(u, null, 2));
+  if (NA_NUVEM) armazem.gravar('config/uso.json', JSON.stringify(u, null, 2)).catch((e) => console.warn(`uso da IA: ${(e as Error).message}`));
+}
+if (NA_NUVEM) {
+  try {
+    const salvo = await armazem.ler('config/uso.json');
+    if (salvo) { fs.mkdirSync(PASTA_CONFIG, { recursive: true }); fs.writeFileSync(ARQUIVO_USO, salvo); }
+  } catch (e) { console.warn(`uso da IA: ${(e as Error).message}`); }
+}
 function contarPedido(modelo: string) { const u = lerUso(); u.pedidos[modelo] = (u.pedidos[modelo] ?? 0) + 1; gravarUso(u); }
 function marcarEsgotado(modelo: string, limite: number | null, volta: string) {
   const u = lerUso();
